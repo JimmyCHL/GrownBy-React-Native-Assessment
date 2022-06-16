@@ -1,3 +1,4 @@
+import { ErrorMessage } from 'formik';
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 
@@ -5,10 +6,30 @@ interface Props {
   name: string;
   value: string;
   title: string;
+  errorMessage?: string | null | undefined;
   handleChange: any;
 }
 
-const FormField = ({ name, value, title, handleChange }: Props) => {
+const FormField = ({ name, value, title, handleChange, errorMessage }: Props) => {
+  const placeholderHandler = (name: string) => {
+    switch (name) {
+      case 'displayName':
+        return 'Farm Display Name';
+        break;
+      case 'name':
+        return 'Farm Name (Unique)';
+        break;
+      case 'phone':
+        return '(US only) (optional)';
+        break;
+      case 'openHours':
+        return 'Open Hours (Optional)';
+        break;
+      default:
+        return '';
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.label}>*{title}</Text>
@@ -16,11 +37,13 @@ const FormField = ({ name, value, title, handleChange }: Props) => {
         <TextInput
           style={styles.inputField}
           placeholderTextColor="gray"
-          placeholder="Your Farm Name"
+          placeholder={placeholderHandler(name)}
           autoCapitalize="none"
           onChangeText={handleChange(name)}
           value={value}
+          keyboardType={name === 'phone' ? 'numeric' : 'default'}
         />
+        <Text style={{ position: 'absolute', color: 'red', top: 45 }}>{errorMessage}</Text>
       </View>
     </View>
   );
