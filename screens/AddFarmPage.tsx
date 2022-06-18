@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { SafeAreaView, Text, StyleSheet, View, TouchableOpacity, Image, ViewStyle } from 'react-native';
+import { SafeAreaView, Text, StyleSheet, View, TouchableOpacity, Image, Keyboard } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import * as ImagePicker from 'expo-image-picker';
+import { ref, getDownloadURL, uploadBytes } from 'firebase/storage';
+import { addDoc, collection, updateDoc, doc } from 'firebase/firestore';
 
 import FormField from '../components/FormField';
 import type { RootStackParamList } from '../App';
+import { auth, storage, firestoreDB } from '../firebase';
 
+//type
 type Props = NativeStackScreenProps<RootStackParamList, 'AddFarmPage'>;
 type ValuesProps = { displayName: string; name: string; phone: string; openHours: string };
 
+//formSchema
 const AddFarmValidationSchema = Yup.object().shape({
   displayName: Yup.string().required('*Display name is required'),
   name: Yup.string().required('*Name is required'), // add test() later
@@ -41,24 +46,73 @@ const AddFarmPage = ({ navigation }: Props) => {
       aspect: [4, 3],
       quality: 1,
     });
-    console.log(result);
+    // console.log(result);
 
     if (!result.cancelled) {
       setImage(result.uri);
     }
+
+    Keyboard.dismiss();
   };
 
   //upLoadImageToFirebase
-  const upLoadImageToFirebase = async (image: string) => {
+  const upLoadImageToFirebase = async (image: string, refId: string) => {
     if (!image) return '';
+
+    console.log('prepare to upload image to firebase storage');
+
+    // Implement a new Blob(binary data) promise with XMLHTTPRequest
+    const blob: Blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+      xhr.onerror = function () {
+        reject(new TypeError('Network request failed'));
+      };
+      xhr.responseType = 'blob';
+      xhr.open('GET', image, true);
+      xhr.send(null);
+    });
+
+    const imageRef = ref(storage, `images/farm/${refId}/farmImage.jpg`);
+
+    return await uploadBytes(imageRef, blob, {
+      contentType: 'image/jpeg',
+    })
+      .then(async (snapshot) => {
+        console.log('image uploaded successfully');
+        const imageUrl = await getDownloadURL(imageRef);
+        return imageUrl;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   //SubmitFormToFirebase
   const submitFormToFirebase = async (values: ValuesProps, image: string) => {
-    let farmData: ValuesProps & { farmImage?: string } = { ...values };
-    const farmImage = await upLoadImageToFirebase(image);
-    farmData.farmImage = farmImage;
-    console.log(farmData);
+    console.log('prepare add farm metaData to firebase firestore farms collection');
+    //add farmData to farms collection
+    const docRef = await addDoc(collection(firestoreDB, 'farms'), { ...values, creator: auth.currentUser!.email });
+
+    console.log('farm metaData was added to farms collection successfully');
+    console.log('farm Document Id is: ', docRef.id);
+
+    const farmImageUrl = await upLoadImageToFirebase(image, docRef.id);
+
+    console.log('prepare to update image url to current farm document');
+
+    //add imageUrl to curren farm document
+    await updateDoc(doc(firestoreDB, 'farms', docRef.id), {
+      image: farmImageUrl,
+    })
+      .then(() => {
+        console.log('imageUrl was added to current farm document successfully');
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (
@@ -109,7 +163,7 @@ const AddFarmPage = ({ navigation }: Props) => {
                   disabled={!values.displayName || !values.name}
                   style={!values.displayName || !values.name ? { ...styles.submitButtonContainer, backgroundColor: '#79554880' } : styles.submitButtonContainer}
                 >
-                  <Text style={styles.submitButtonText}>Add Farm</Text>
+                  <Text style={styles.submitButtonText}>Submit</Text>
                 </TouchableOpacity>
               </>
             )}
