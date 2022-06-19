@@ -5,6 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 import UserAuthentication from '../components/UserAuthentication';
+import FarmsList from '../components/FarmsList';
 import type { RootStackParamList } from '../App';
 import { auth } from '../firebase';
 
@@ -67,7 +68,8 @@ const UserLoginAndRegisterPage = ({ navigation }: Props) => {
       {/* show form */}
       {!userExist && <UserAuthentication loginMode={loginMode} />}
 
-      {/* FarmList */}
+      {/* FarmsList */}
+      <FarmsList />
     </SafeAreaView>
   );
 };
@@ -108,7 +110,8 @@ const styles = StyleSheet.create({
   },
   addFarmButtonContainer: {
     marginTop: 5,
-    alignItems: 'center',
+    marginLeft: -15,
+    marginRight: 5,
     borderRadius: 10,
   },
   addFarmButtonTextContainer: {
@@ -121,6 +124,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'green',
     padding: 10,
     fontSize: 20,
-    paddingHorizontal: 40,
+    textAlign: 'center',
   },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, TextInput, StyleSheet, Text, TouchableOpacity, Alert, Keyboard } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
@@ -60,7 +60,7 @@ const UserAuthentication = ({ loginMode }: Props) => {
                   keyboardType="email-address"
                   textContentType="emailAddress"
                   onChangeText={handleChange('email')}
-                  // onBlur={handleBlur('email')}
+                  onBlur={() => Keyboard.dismiss()}
                   value={values.email}
                   style={styles.inputField}
                 />

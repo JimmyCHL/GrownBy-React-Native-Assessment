@@ -1,5 +1,4 @@
 import React from 'react';
-import { TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
@@ -27,14 +26,12 @@ const App = () => {
   return (
     <NavigationContainer theme={theme}>
       <StatusBar style="auto" />
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <LinearGradient colors={['transparent', 'green']} style={{ flex: 1, padding: 10 }} start={{ x: 0.25, y: 0.25 }}>
-          <Stack.Navigator screenOptions={{ headerShown: true }} initialRouteName="UserLoginAndRegisterPage">
-            <Stack.Screen name="UserLoginAndRegisterPage" component={UserLoginAndRegisterPage} />
-            <Stack.Screen name="AddFarmPage" component={AddFarmPage} />
-          </Stack.Navigator>
-        </LinearGradient>
-      </TouchableWithoutFeedback>
+      <LinearGradient colors={['transparent', 'green']} style={{ flex: 1, padding: 10 }} start={{ x: 0.25, y: 0.25 }}>
+        <Stack.Navigator screenOptions={{ headerShown: true }} initialRouteName="UserLoginAndRegisterPage">
+          <Stack.Screen name="UserLoginAndRegisterPage" component={UserLoginAndRegisterPage} />
+          <Stack.Screen name="AddFarmPage" component={AddFarmPage} />
+        </Stack.Navigator>
+      </LinearGradient>
     </NavigationContainer>
   );
 };

@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { SafeAreaView, Text, StyleSheet, View, TouchableOpacity, Image, Keyboard } from 'react-native';
+import { SafeAreaView, Text, StyleSheet, View, TouchableOpacity, Image, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 import * as ImagePicker from 'expo-image-picker';
 import { ref, getDownloadURL, uploadBytes } from 'firebase/storage';
-import { addDoc, collection, updateDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, updateDoc, doc, getDocs } from 'firebase/firestore';
 
 import FormField from '../components/FormField';
 import type { RootStackParamList } from '../App';
@@ -16,27 +16,56 @@ import { auth, storage, firestoreDB } from '../firebase';
 type Props = NativeStackScreenProps<RootStackParamList, 'AddFarmPage'>;
 type ValuesProps = { displayName: string; name: string; phone: string; openHours: string };
 
-//formSchema
-const AddFarmValidationSchema = Yup.object().shape({
-  displayName: Yup.string().required('*Display name is required'),
-  name: Yup.string().required('*Name is required'), // add test() later
-  phone: Yup.string()
-    .test('onlyNumber', '', function (value: any, context: any): any {
-      //value would be undefined in the first time potentially, so make sure value is not undefined before check condition.
-      if (value && value.includes('.')) {
-        return context.createError({ message: '*Only number is allowed' });
-      }
-      if (value && value !== '' && value.length < 10) {
-        return context.createError({ message: '*Phone number must be 10 digits' });
-      }
-      return true;
-    })
-    .optional(),
-  openHours: Yup.string().optional(),
-});
-
 const AddFarmPage = ({ navigation }: Props) => {
   const [image, setImage] = useState<string>('');
+  const [data, setData] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const docsSnap = await getDocs(collection(firestoreDB, 'farms'));
+        const docsDataArray: string[] = [];
+
+        docsSnap.forEach((doc) => {
+          const docFarmName: string = doc.data().name;
+          docsDataArray.push(docFarmName);
+        });
+        setData(docsDataArray);
+      } catch (e) {
+        console.log(e);
+      }
+    })();
+  }, []);
+
+  //formSchema
+  const AddFarmValidationSchema = Yup.object().shape({
+    displayName: Yup.string().required('*Display name is required'),
+    name: Yup.string()
+      .required('*Name is required')
+      .test('unique name', '*Farm name already exists', (value) => {
+        let isUnique = true;
+        data.forEach((farmName) => {
+          const name = farmName.toLowerCase().replace(' ', '').trim();
+          if (name === value?.toLowerCase().replace(' ', '').trim()) {
+            isUnique = false;
+          }
+        });
+        return isUnique;
+      }),
+    phone: Yup.string()
+      .test('onlyNumber', '', function (value: any, context: any): any {
+        //value would be undefined in the first time potentially, so make sure value is not undefined before check condition.
+        if (value && value.includes('.')) {
+          return context.createError({ message: '*Only number is allowed' });
+        }
+        if (value && value !== '' && value.length < 10) {
+          return context.createError({ message: '*Phone number must be 10 digits' });
+        }
+        return true;
+      })
+      .optional(),
+    openHours: Yup.string().optional(),
+  });
 
   //pick Image
   const pickImage = async () => {
@@ -123,52 +152,56 @@ const AddFarmPage = ({ navigation }: Props) => {
         </View>
 
         {/* form */}
-        <View style={image ? { ...styles.formContainer, flex: 1 } : styles.formContainer}>
-          <Formik
-            initialValues={{ displayName: '', name: '', phone: '', openHours: '' }}
-            onSubmit={(values, { resetForm }) => {
-              console.log(values);
-              submitFormToFirebase(values, image);
-              resetForm({});
-              navigation.navigate('UserLoginAndRegisterPage');
-            }}
-            validationSchema={AddFarmValidationSchema}
-          >
-            {({ handleChange, handleSubmit, values, errors }) => (
-              <>
-                <FormField name="displayName" title="Display Name" value={values.displayName} handleChange={handleChange} errorMessage={errors.displayName} />
-                <FormField name="name" title="Name" value={values.name} handleChange={handleChange} errorMessage={errors.name} />
-                <FormField name="phone" title="Phone" value={values.phone} handleChange={handleChange} errorMessage={errors.phone} />
-                <FormField name="openHours" title="Open Hours" value={values.openHours} handleChange={handleChange} errorMessage={errors.openHours} />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={image ? { ...styles.formContainer, flex: 1 } : styles.formContainer}>
+            <Formik
+              initialValues={{ displayName: '', name: '', phone: '', openHours: '' }}
+              onSubmit={(values, { resetForm }) => {
+                console.log(values);
+                submitFormToFirebase(values, image);
+                resetForm({});
+                navigation.navigate('UserLoginAndRegisterPage');
+              }}
+              validationSchema={AddFarmValidationSchema}
+            >
+              {({ handleChange, handleSubmit, values, errors }) => (
+                <>
+                  <FormField name="displayName" title="Display Name" value={values.displayName} handleChange={handleChange} errorMessage={errors.displayName} />
+                  <FormField name="name" title="Name" value={values.name} handleChange={handleChange} errorMessage={errors.name} />
+                  <FormField name="phone" title="Phone" value={values.phone} handleChange={handleChange} errorMessage={errors.phone} />
+                  <FormField name="openHours" title="Open Hours" value={values.openHours} handleChange={handleChange} errorMessage={errors.openHours} />
 
-                <View style={styles.imageButtonsContainer}>
-                  <TouchableOpacity onPress={() => pickImage()} style={styles.imageButtonContainer}>
-                    <Text style={styles.imageButtonText}>{image ? 'Change Image' : 'Add An Image'}</Text>
-                  </TouchableOpacity>
-                  {!!image && (
-                    <TouchableOpacity onPress={() => setImage('')} style={styles.imageButtonContainer}>
-                      <Text style={styles.imageButtonText}>Delete</Text>
+                  <View style={styles.imageButtonsContainer}>
+                    <TouchableOpacity onPress={() => pickImage()} style={styles.imageButtonContainer}>
+                      <Text style={styles.imageButtonText}>{image ? 'Change Image' : 'Add An Image'}</Text>
                     </TouchableOpacity>
-                  )}
-                </View>
-
-                {!!image && (
-                  <View style={styles.showImageContainer}>
-                    <Image source={{ uri: image }} style={styles.imageConfig} />
+                    {!!image && (
+                      <TouchableOpacity onPress={() => setImage('')} style={styles.imageButtonContainer}>
+                        <Text style={styles.imageButtonText}>Delete</Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                )}
 
-                <TouchableOpacity
-                  onPress={() => handleSubmit()}
-                  disabled={!values.displayName || !values.name}
-                  style={!values.displayName || !values.name ? { ...styles.submitButtonContainer, backgroundColor: '#79554880' } : styles.submitButtonContainer}
-                >
-                  <Text style={styles.submitButtonText}>Submit</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </Formik>
-        </View>
+                  {!!image && (
+                    <View style={styles.showImageContainer}>
+                      <Image source={{ uri: image }} style={styles.imageConfig} />
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    onPress={() => handleSubmit()}
+                    disabled={!values.displayName || !values.name}
+                    style={
+                      !values.displayName || !values.name ? { ...styles.submitButtonContainer, backgroundColor: '#79554880' } : styles.submitButtonContainer
+                    }
+                  >
+                    <Text style={styles.submitButtonText}>Submit</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </Formik>
+          </View>
+        </TouchableWithoutFeedback>
       </LinearGradient>
     </SafeAreaView>
   );
