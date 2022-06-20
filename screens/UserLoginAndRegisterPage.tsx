@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
@@ -17,12 +16,15 @@ const UserLoginAndRegisterPage = ({ navigation }: Props) => {
 
   useEffect(() => {
     return onAuthStateChanged(auth, (user) => {
-      // console.log(user);
       if (user) {
         setUserExist(true);
+      } else {
+        setUserExist(false);
       }
       if (auth.currentUser) {
         setUserExist(true);
+      } else {
+        setUserExist(false);
       }
     });
   }, []);
@@ -48,7 +50,14 @@ const UserLoginAndRegisterPage = ({ navigation }: Props) => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>GrownBy</Text>
-        <TouchableOpacity style={styles.headerButton} onPress={handleAuthButton}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => {
+            handleAuthButton();
+          }}
+          testID="authButton"
+          accessibilityLabel="authButton"
+        >
           <Text style={styles.headerButtonText}>{userExist ? 'Logout' : loginMode ? 'Register' : 'Login'}</Text>
         </TouchableOpacity>
       </View>
@@ -57,7 +66,12 @@ const UserLoginAndRegisterPage = ({ navigation }: Props) => {
       {auth.currentUser && (
         <View style={styles.greetingContainer}>
           <Text style={styles.greetingText}>Hello 😄, {auth.currentUser?.email}</Text>
-          <TouchableOpacity style={styles.addFarmButtonContainer} onPress={addFormButtonNavigation}>
+          <TouchableOpacity
+            style={styles.addFarmButtonContainer}
+            onPress={() => addFormButtonNavigation()}
+            testID="addFarmButton"
+            accessibilityLabel="addFarmButton"
+          >
             <View style={styles.addFarmButtonTextContainer}>
               <Text style={styles.addFarmButtonText}>AddFarm +</Text>
             </View>

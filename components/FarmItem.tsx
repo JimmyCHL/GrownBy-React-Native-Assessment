@@ -42,7 +42,7 @@ const FarmItem = ({ id, displayName, image, name, phone, createdDate, openHours,
           <Image
             source={{ uri: image ? image : 'https://t3.ftcdn.net/jpg/04/62/93/66/360_F_462936689_BpEEcxfgMuYPfTaIAOC1tCDurmsno7Sp.jpg' }}
             style={styles.image}
-            resizeMode="center"
+            resizeMode="cover"
           />
         </View>
       </View>
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   },
   image: {
     height: 200,
-    width: 150,
+    width: 200,
   },
   downSession: {
     flex: 1,

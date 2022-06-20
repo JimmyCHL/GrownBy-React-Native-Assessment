@@ -172,7 +172,7 @@ const AddFarmPage = ({ navigation }: Props) => {
                   <FormField name="openHours" title="Open Hours" value={values.openHours} handleChange={handleChange} errorMessage={errors.openHours} />
 
                   <View style={styles.imageButtonsContainer}>
-                    <TouchableOpacity onPress={() => pickImage()} style={styles.imageButtonContainer}>
+                    <TouchableOpacity onPress={() => pickImage()} style={styles.imageButtonContainer} testID="imageButton" accessibilityLabel="imageButton">
                       <Text style={styles.imageButtonText}>{image ? 'Change Image' : 'Add An Image'}</Text>
                     </TouchableOpacity>
                     {!!image && (
@@ -190,10 +190,14 @@ const AddFarmPage = ({ navigation }: Props) => {
 
                   <TouchableOpacity
                     onPress={() => handleSubmit()}
-                    disabled={!values.displayName || !values.name}
+                    disabled={!values.displayName || !values.name || !!errors.name}
                     style={
-                      !values.displayName || !values.name ? { ...styles.submitButtonContainer, backgroundColor: '#79554880' } : styles.submitButtonContainer
+                      !values.displayName || !values.name || !!errors.name
+                        ? { ...styles.submitButtonContainer, backgroundColor: '#79554880' }
+                        : styles.submitButtonContainer
                     }
+                    testID="farmSubmitButton"
+                    accessibilityLabel="farmSubmitButton"
                   >
                     <Text style={styles.submitButtonText}>Submit</Text>
                   </TouchableOpacity>

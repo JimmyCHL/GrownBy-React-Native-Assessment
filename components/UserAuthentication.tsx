@@ -17,9 +17,9 @@ const AuthValidationSchema = Yup.object().shape({
 
 const UserAuthentication = ({ loginMode }: Props) => {
   //Authentication Function
-  const authenticationFunction = async (email: string, password: string) => {
+  const authenticationFunction = (email: string, password: string) => {
     if (loginMode) {
-      await signInWithEmailAndPassword(auth, email, password)
+      signInWithEmailAndPassword(auth, email, password)
         .then((result) => {
           console.log('User signed in successfully');
         })
@@ -27,7 +27,7 @@ const UserAuthentication = ({ loginMode }: Props) => {
           Alert.alert('Message', 'Invalid email or password.');
         });
     } else {
-      await createUserWithEmailAndPassword(auth, email, password)
+      createUserWithEmailAndPassword(auth, email, password)
         .then((result) => {
           console.log('account created successfully');
         })
@@ -63,6 +63,8 @@ const UserAuthentication = ({ loginMode }: Props) => {
                   onBlur={() => Keyboard.dismiss()}
                   value={values.email}
                   style={styles.inputField}
+                  testID="email"
+                  accessibilityLabel="email"
                 />
               </View>
               <View style={styles.inputContainer}>
@@ -78,6 +80,8 @@ const UserAuthentication = ({ loginMode }: Props) => {
                   // onBlur={handleBlur('password')}
                   value={values.password}
                   style={styles.inputField}
+                  testID="password"
+                  accessibilityLabel="password"
                 />
               </View>
             </View>
@@ -91,6 +95,8 @@ const UserAuthentication = ({ loginMode }: Props) => {
               style={!isValid || !values.email || !values.password ? { ...styles.buttonContainer, backgroundColor: '#79554880' } : styles.buttonContainer}
               onPress={() => handleSubmit()}
               disabled={!isValid || !values.email || !values.password}
+              testID="submit"
+              accessibilityLabel="submit"
             >
               <Text style={styles.buttonText}>{loginMode ? 'Login' : 'Register'}</Text>
             </TouchableOpacity>

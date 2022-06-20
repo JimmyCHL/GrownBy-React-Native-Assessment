@@ -38,6 +38,8 @@ const FormField = ({ name, value, title, handleChange, errorMessage }: Props) =>
           placeholderTextColor="gray"
           placeholder={placeholderHandler(name)}
           autoCapitalize="none"
+          accessibilityLabel={name}
+          testID={name}
           onChangeText={handleChange(name)}
           value={value}
           keyboardType={name === 'phone' ? 'numeric' : 'default'}
@@ -71,5 +73,6 @@ const styles = StyleSheet.create({
   },
   inputField: {
     fontSize: 20,
+    outlineStyle: 'none',
   },
 });
